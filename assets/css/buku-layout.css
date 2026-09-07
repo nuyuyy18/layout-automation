@@ -1,0 +1,296 @@
+/* ============================================================
+   BUKU-LAYOUT.CSS  —  Engine layout buku cetak (paged media A5)
+   ------------------------------------------------------------
+   Pakai:  <link rel="stylesheet" href="buku-layout.css">
+   Atur:   ubah token di :root + @page. Semua komponen turun dari token.
+   Modul:  1.Token  2.@page  3.Reset  4.Sampul  5.DaftarIsi
+           6.Bab  7.Arab  8.Terjemah  9.Daftar  10.Kotak
+           11.Footnote  12.Guard
+   ============================================================ */
+
+/* ===== 1. TOKEN ===== */
+:root{
+  /* Kertas & margin — satuan mm (mirip Word margin) */
+  --page-w: 148mm;          /* A5 lebar */
+  --page-h: 210mm;          /* A5 tinggi */
+  --margin-top: 18mm;
+  --margin-outer: 16mm;     /* luar (kanan halaman ganjil) */
+  --margin-inner: 20mm;     /* dalam (dekat jilid) */
+  --margin-bottom: 20mm;
+
+  /* Skala spasi — 4pt base, named by role */
+  --space-3xs: .5mm;  --space-2xs: 1mm;  --space-xs: 2mm;
+  --space-sm: 3mm;    --space-md: 4mm;   --space-lg: 6mm;
+  --space-xl: 8mm;    --space-2xl: 12mm; --space-3xl: 18mm;
+  --space-4xl: 30mm;
+
+  /* Warna — tema hijau Islami, tint bukan murni */
+  --ink: #1a1a1a;
+  --ink-soft: #444;
+  --ink-faint: #888;
+  --paper: #ffffff;
+  --paper-warm: #f5f5f0;
+  --rule: #ccc;
+  --rule-soft: #ddd;
+  --accent: #1b5e20;
+  --accent-2: #2e7d32;
+  --accent-tint: #e8f5e9;
+  --accent-border: #a5d6a7;
+
+  /* Tipografi */
+  --font-body: Calibri, "Segoe UI", sans-serif;
+  --font-arab: "Arabic Typesetting","Traditional Arabic","Scheherazade New","Amiri",serif;
+  --fs-body: 10.8pt;
+  --fs-arab: 15.5pt;
+  --fs-toc: 10.5pt;
+  --fs-small: 8.5pt;
+  --lh-body: 1.55;
+  --lh-arab: 2.0;
+}
+
+/* ===== 2. PAGED MEDIA ===== */
+@page{
+  size: var(--page-w) var(--page-h);
+  margin: var(--margin-top) var(--margin-outer) var(--margin-bottom) var(--margin-inner);
+  @bottom-center{
+    content: counter(page);
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    color: #666;
+  }
+}
+@page :first        { margin:0; @bottom-center{ content:""; } }
+@page cover-page   { margin:0; @bottom-center{ content:""; } }
+@page toc-page     { @bottom-center{ content: counter(page); } }
+@page chapter-page { @bottom-center{ content: counter(page); } }
+
+/* ===== 3. RESET ===== */
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+
+
+/* ===== 4b. SCREEN PREVIEW ===== */
+@media screen {
+  html, body {
+    min-height: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    background: #d7d4cd;
+    padding: 24px 0 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* Hanya page-sheet yang menjadi lembar halaman fisik A5 di layar */
+  .page-sheet {
+    width: var(--page-w);
+    height: var(--page-h);
+    box-sizing: border-box;
+    background: var(--paper);
+    padding: var(--margin-top) var(--margin-outer) var(--margin-bottom) var(--margin-inner);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .12);
+    border: 1px solid rgba(0, 0, 0, .06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Halaman Cover tidak memiliki margin/padding halaman */
+  .page-sheet--cover {
+    padding: 0 !important;
+  }
+
+  /* Di screen preview, hilangkan double styling pada elemen modul */
+  .cover,
+  .toc,
+  .bab,
+  .chapter {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .cover {
+    background: linear-gradient(160deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent) 100%) !important;
+    color: #fff !important;
+    padding: var(--space-4xl) var(--space-3xl) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* ===== 4. SAMPUL ===== */
+.cover{
+  page: cover-page;
+  page-break-after: always;
+  width: var(--page-w);
+  height: var(--page-h);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent) 100%);
+  color:#fff;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  padding: var(--space-4xl) var(--space-3xl);
+}
+.cover .ornament{ font-size:28pt; margin:var(--space-lg) 0; opacity:.85; }
+.cover .judul-arab{
+  font-family: var(--font-arab); font-size:28pt; direction:rtl;
+  line-height:1.6; margin:var(--space-md) 0;
+}
+.cover .judul-latin{ font-size:20pt; font-weight:bold; margin:var(--space-sm) 0; }
+.cover .subtitle{ font-size:11pt; opacity:.85; margin:var(--space-xs) 0; }
+.cover .author{ font-size:10pt; opacity:.75; margin-top:var(--space-2xl); }
+.cover .divider{
+  width:40mm; height:1px; background:rgba(255,255,255,.4);
+  margin:var(--space-lg) auto;
+}
+
+/* ===== 5. DAFTAR ISI ===== */
+.toc{ page: toc-page; page-break-after:always; padding-top:var(--space-xs); }
+.toc h2{
+  text-align:center; font-size:14pt; color:var(--accent);
+  border-bottom:2px solid var(--accent);
+  padding-bottom:var(--space-xs); margin-bottom:var(--space-xl);
+  letter-spacing:.5px;
+}
+.toc ul{ list-style:none; }
+.toc li{
+  display:flex; align-items:baseline;
+  margin:var(--space-sm) 0; font-size:var(--fs-toc);
+}
+.toc .dots{
+  flex:1; border-bottom:1.5px dotted #bbb;
+  margin:0 var(--space-sm); position:relative; top:-1.5px;
+}
+.toc .nomor{ color:var(--accent); font-weight:bold; min-width:6mm; }
+.toc a{ text-decoration:none; color:var(--ink); }
+.toc .sub{ padding-left:var(--space-lg); font-size:var(--fs-toc); color:#333; }
+
+/* ===== 6. BAB ===== */
+.bab,.chapter{ page: chapter-page; page-break-before:always; }
+.bab-header{
+  text-align:center; margin-bottom:var(--space-xl);
+  padding-bottom:var(--space-md); border-bottom:1px solid var(--rule-soft);
+}
+.bab-header .bab-label{
+  font-size:9pt; text-transform:uppercase; letter-spacing:2px;
+  color:var(--ink-faint); margin-bottom:var(--space-2xs);
+}
+.bab-header .bab-arab{
+  font-family:var(--font-arab); font-size:20pt; direction:rtl;
+  line-height:1.7; color:var(--accent); display:block; margin:var(--space-xs) 0;
+}
+.bab-header .bab-judul{ font-size:14pt; font-weight:bold; color:var(--accent); }
+
+/* Judul bab (versi sederhana, tanpa header block) */
+.bab h2,.chapter h2{
+  text-align:center; font-size:14pt; margin:0 0 var(--space-xl);
+  color:var(--accent);
+}
+.bab h3,.chapter h3,h3.pasal{
+  font-size:11.5pt; font-weight:bold; color:var(--accent-2);
+  margin:var(--space-xl) 0 var(--space-md); padding-left:var(--space-sm);
+  border-left:3px solid var(--accent-2);
+}
+
+/* ===== 7. BLOK ARAB (matan) ===== */
+.arab, .arabic{
+  direction:rtl; text-align:right;
+  font-family:var(--font-arab); font-size:var(--fs-arab);
+  line-height:var(--lh-arab); margin:var(--space-md) 0;
+  padding:var(--space-md) var(--space-lg);
+  background:var(--paper-warm);
+  border:1px solid var(--rule-soft);
+  border-radius:var(--space-xs);
+}
+
+/* ===== 8. TERJEMAHAN ===== */
+.terjemah, .translation{
+  text-align:justify; margin:var(--space-sm) 0 var(--space-md);
+  font-size:var(--fs-body); line-height:var(--lh-body);
+}
+.terjemah b, .translation .label{ color:var(--accent); }
+.translation .label{ font-weight:bold; }
+
+/* ===== 9. DAFTAR BERNOMOR ===== */
+ol.daftar, ol.pasal{
+  padding-left:var(--space-lg); margin:var(--space-sm) 0 var(--space-md);
+}
+ol.daftar li, ol.pasal li{ margin:var(--space-2xs) 0; font-size:var(--fs-body); }
+
+/* ===== 10. KOTAK INFO / FAIDAH ===== */
+.kotak{
+  background:var(--accent-tint); border:1px solid var(--accent-border);
+  border-radius:var(--space-xs); padding:var(--space-md) var(--space-lg);
+  margin:var(--space-lg) 0; font-size:10.2pt; line-height:1.5;
+}
+.kotak > *{ display:block; }
+.kotak .kotak-text{ margin-top:var(--space-xs); }
+.kotak .kotak-source{ margin-top:var(--space-xs); color:#555; font-size:9.5pt; }
+.kotak .arab,.kotak .arabic{ background:transparent; border:none; padding:0; }
+.kotak .kotak-label{
+  font-weight:bold; color:var(--accent); margin-bottom:var(--space-2xs);
+  font-size:9pt; text-transform:uppercase; letter-spacing:1px;
+}
+
+/* ===== 11. FOOTNOTE ===== */
+.fn, .footnote{
+  border-top:1px solid var(--rule); padding-top:var(--space-xs);
+  margin-top:var(--space-xl); font-size:var(--fs-small);
+  color:var(--ink-soft); line-height:1.5;
+}
+.fn sup, .footnote sup{ color:var(--accent); font-size:7pt; }
+
+/* ===== 12. GUARD — orphan/widow/break ===== */
+p,li{ orphans:2; widows:2; }
+h2,h3{ page-break-after:avoid; }
+.arab,.arabic,.kotak,.checklist-table{ page-break-inside:avoid; }
+
+/* ===== 13. CHECKLIST (Tabel Ibadah) ===== */
+.checklist-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-sm) 0;
+  font-size: 8.5pt; /* Diperkecil agar masuk lebar A5 */
+}
+.checklist-table th, .checklist-table td {
+  border: 1px solid var(--rule);
+  padding: 1.5mm 1mm; /* Padding ketat agar tidak overflow samping */
+  text-align: center;
+}
+.checklist-table td:first-child {
+  text-align: left;
+  font-weight: bold;
+  font-size: 8pt;
+}
+.checklist-table th {
+  background: var(--paper-warm);
+  color: var(--accent);
+  font-weight: bold;
+}
+.kotak-centang {
+  display: inline-block;
+  width: 3mm;
+  height: 3mm;
+  border: 1px solid var(--ink-soft);
+  border-radius: 0.5mm;
+  vertical-align: middle;
+}

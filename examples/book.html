@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitab Bersuci — Preview Buku Modular</title>
+<link rel="stylesheet" href="../assets/css/buku-layout.css">
+<style>
+/* Reset & Helper CSS khusus mode screen preview */
+@media screen {
+  #preview-helper {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    font-size: 12px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  .book-stack {
+    --scale-factor: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    background: #d7d4cd;
+    padding: 24px 12px 48px;
+    overflow-x: clip;
+  }
+
+  /* Wrapper jaga ruang layout setelah scale */
+  .page-wrapper {
+    width: calc(var(--page-w) * var(--scale-factor));
+    height: calc(var(--page-h) * var(--scale-factor));
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Representasi satu halaman fisik A5 di layar */
+  .page-sheet {
+    width: var(--page-w);
+    height: var(--page-h);
+    box-sizing: border-box;
+    background: var(--paper);
+    padding: var(--margin-top) var(--margin-outer) var(--margin-bottom) var(--margin-inner);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .12);
+    border: 1px solid rgba(0, 0, 0, .06);
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    transform: scale(var(--scale-factor));
+    transform-origin: top left;
+  }
+
+  .page-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* Simulasi nomor halaman di footer layar */
+  .page-footer {
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    color: #666;
+    margin-top: 10px;
+    border-top: 1px dashed #eee;
+  }
+}
+</style>
+</head>
+<body>
+
+  <!-- Container utama lembar halaman -->
+  <div id="book-container" class="book-stack"></div>
+
+  <div id="preview-helper" class="no-print">
+    📖 Mode Preview Buku (Auto-Paginated)
+  </div>
+
+  <script>
+    const modules = [
+      'modules/cover.html',
+      'modules/toc.html',
+      'modules/bab-01.html',
+      'modules/bab-02.html',
+      'modules/bab-03.html'
+    ];
+
+    function adjustScale() {
+      const container = document.getElementById('book-container');
+      const probe = container.querySelector('.page-sheet');
+      if (!probe) return;
+
+      // offsetWidth = layout width tanpa transform
+      const pageWidth = probe.offsetWidth || 560;
+      const available = Math.max(240, window.innerWidth - 24);
+      const scale = Math.min(1, available / pageWidth);
+      container.style.setProperty('--scale-factor', String(scale));
+    }
+
+    async function loadAndPaginateBook() {
+      const container = document.getElementById('book-container');
+      container.innerHTML = '';
+      let fullContentHTML = '';
+
+      // 1. Ambil semua konten modul
+      for (const file of modules) {
+        try {
+          const res = await fetch(file);
+          if (!res.ok) throw new Error(`Gagal load ${file}`);
+          fullContentHTML += await res.text();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = fullContentHTML;
+      const elements = Array.from(tempDiv.children);
+      
+      let pageNumber = 1;
+      let currentPage = null;
+      let currentContentArea = null;
+
+      function startNewPage(type) {
+        currentPage = createPageSheet(pageNumber, type);
+        container.appendChild(currentPage);
+        currentContentArea = currentPage.querySelector('.page-content');
+        pageNumber++;
+      }
+
+      // 2. Alirkan elemen-elemen ke halaman-halaman
+      for (const el of elements) {
+        if (el.classList.contains('cover')) {
+          startNewPage('cover');
+          currentContentArea.appendChild(el.cloneNode(true));
+        } else if (el.classList.contains('toc')) {
+          startNewPage('toc');
+          currentContentArea.appendChild(el.cloneNode(true));
+        } else if (el.classList.contains('chapter') || el.classList.contains('bab')) {
+          // Setiap ganti bab, PASTI mulai halaman baru
+          startNewPage('chapter');
+
+          // Salin header bab (.bab-header atau h2) ke halaman baru
+          const header = el.querySelector('.bab-header') || el.querySelector('h2');
+          if (header) {
+            currentContentArea.appendChild(header.cloneNode(true));
+          }
+
+          // Alirkan anak-anak elemen bab ke halaman (menghindari overflow)
+          const children = Array.from(el.children).filter(c => !c.classList.contains('bab-header') && c.tagName !== 'H2');
+          for (const child of children) {
+            const clone = child.cloneNode(true);
+            currentContentArea.appendChild(clone);
+
+            // A5 tinggi asli sekitar 794px. Tinggi konten area maksimal 630px untuk menghindari overflow.
+            if (currentContentArea.scrollHeight > 630) {
+              currentContentArea.removeChild(clone);
+              startNewPage('chapter');
+              currentContentArea.appendChild(clone);
+            }
+          }
+        } else {
+          // Elemen bebas lainnya
+          if (!currentContentArea) {
+            startNewPage('chapter');
+          }
+          const clone = el.cloneNode(true);
+          currentContentArea.appendChild(clone);
+          if (currentContentArea.scrollHeight > 630) {
+            currentContentArea.removeChild(clone);
+            startNewPage('chapter');
+            currentContentArea.appendChild(clone);
+          }
+        }
+      }
+
+      adjustScale();
+    }
+
+    // Fungsi pembuat lembar halaman fisik A5
+    function createPageSheet(num, type) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'page-wrapper';
+
+      const sheet = document.createElement('div');
+      sheet.className = 'page-sheet';
+      if (type) {
+        sheet.classList.add('page-sheet--' + type);
+      }
+      
+      const content = document.createElement('div');
+      content.className = 'page-content';
+      sheet.appendChild(content);
+
+      // Tampilkan nomor halaman kecuali di cover
+      const footer = document.createElement('div');
+      footer.className = 'page-footer';
+      footer.innerText = (num === 1 || type === 'cover') ? '' : num;
+      sheet.appendChild(footer);
+
+      wrapper.appendChild(sheet);
+      return wrapper;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAndPaginateBook);
+    window.addEventListener('resize', adjustScale);
+  </script>
+</body>
+</html>
