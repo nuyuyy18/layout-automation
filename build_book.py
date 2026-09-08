@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import docx
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm, Inches
@@ -13,6 +14,18 @@ C_BLACK = RGBColor(0, 0, 0)
 C_DARK_GREEN = RGBColor(27, 94, 32)
 C_MUTED = RGBColor(80, 80, 80)
 C_LIGHT = RGBColor(120, 120, 120)
+
+def clean_all(text):
+    if not text:
+        return ""
+    # Hapus tanda pisah em-dash dan en-dash secara tuntas
+    t = text.replace("—", ", ").replace("–", " ")
+    # Hapus tulisan tere liye (case-insensitive)
+    t = re.sub(r'tere\s*liye,?\s*', '', t, flags=re.IGNORECASE)
+    t = t.replace(", ,", ",").replace(" ,", ",")
+    while "  " in t:
+        t = t.replace("  ", " ")
+    return t.strip()
 
 def set_cell(cell, fill_hex="FFFFFF", top=80, bottom=80, left=100, right=100, borders=None):
     tcPr = cell._tc.get_or_add_tcPr()
@@ -38,7 +51,8 @@ def add_p(doc, text="", bold=False, italic=False, size=11.5, space_after=6, spac
     if indent > 0:
         p.paragraph_format.first_line_indent = Cm(indent)
     if text:
-        r = p.add_run(text.strip())
+        cleaned = clean_all(text)
+        r = p.add_run(cleaned)
         r.font.name = "Garamond"
         r.font.size = Pt(size)
         r.font.bold = bold
@@ -59,18 +73,19 @@ def add_box(doc, title, text, bg="FBFBF9", border_color="1B5E20", italic=True):
                       "right": {"val": "single", "sz": "4", "color": "E0E0E0"}})
     p0 = c.paragraphs[0]
     p0.paragraph_format.space_after = Pt(4)
-    r0 = p0.add_run(title)
+    r0 = p0.add_run(clean_all(title))
     r0.font.name = "Garamond"
     r0.font.size = Pt(10.5)
     r0.font.bold = True
     r0.font.color.rgb = C_DARK_GREEN
     
     for line in text.strip().split("\n"):
-        if line.strip():
+        cleaned_line = clean_all(line)
+        if cleaned_line:
             p = c.add_paragraph()
             p.paragraph_format.space_after = Pt(3)
             p.paragraph_format.line_spacing = 1.2
-            r = p.add_run(line.strip())
+            r = p.add_run(cleaned_line)
             r.font.name = "Garamond"
             r.font.size = Pt(10.5)
             r.font.italic = italic
@@ -100,21 +115,21 @@ def add_arabic_box(doc, ayat_ar, ayat_id, ayat_ref, doa_ar=None, doa_id=None, do
             p_ar = c.add_paragraph()
             p_ar.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             p_ar.paragraph_format.line_spacing = 1.6
-            r_ar = p_ar.add_run(ar)
+            r_ar = p_ar.add_run(ar.strip())
             r_ar.font.name = "Traditional Arabic"
             r_ar.font.size = Pt(14)
             r_ar.font.bold = True
         if trans:
             p_tr = c.add_paragraph()
             p_tr.paragraph_format.line_spacing = 1.2
-            r_tr = p_tr.add_run(f'"{trans}"')
+            r_tr = p_tr.add_run(f'"{clean_all(trans)}"')
             r_tr.font.name = "Garamond"
             r_tr.font.size = Pt(10)
             r_tr.font.italic = True
             if ref:
                 p_ref = c.add_paragraph()
                 p_ref.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                r_ref = p_ref.add_run(f"— {ref}")
+                r_ref = p_ref.add_run(f"({clean_all(ref)})")
                 r_ref.font.name = "Garamond"
                 r_ref.font.size = Pt(9)
                 r_ref.font.bold = True
@@ -132,14 +147,10 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
     sec.left_margin, sec.right_margin = Cm(2.2), Cm(1.8)
     sec.different_first_page_header_footer = True
     
-    # Nomor Halaman Footer
+    # Nomor Halaman Footer Bersih (Hanya Angka, Tanpa Tanda Hubung)
     fp = sec.footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_f1 = fp.add_run("— ")
-    r_f1.font.name, r_f1.font.size, r_f1.font.color.rgb = "Garamond", Pt(9), C_LIGHT
     fp._p.append(parse_xml(f'<w:fldSimple {nsdecls("w")} w:instr="PAGE"/>'))
-    r_f2 = fp.add_run(" —")
-    r_f2.font.name, r_f2.font.size, r_f2.font.color.rgb = "Garamond", Pt(9), C_LIGHT
     
     fm = data["front_matter"]
     
@@ -147,14 +158,13 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
     doc.add_paragraph().paragraph_format.space_before = Pt(40)
     add_p(doc, "❖   ❖   ❖", size=14, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=12)
     add_p(doc, fm["title"], bold=True, size=22, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=8)
-    add_p(doc, fm["subtitle"], italic=True, size=11.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=24)
-    add_p(doc, "— — — — — — — — — —", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=36)
+    add_p(doc, fm["subtitle"], italic=True, size=11.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=28)
     add_p(doc, fm["compiler"], bold=True, size=10.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=6)
     for insp in fm["inspirations"]:
         add_p(doc, insp, italic=True, size=9, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=2)
-    doc.add_paragraph().paragraph_format.space_before = Pt(48)
+    doc.add_paragraph().paragraph_format.space_before = Pt(56)
     add_p(doc, fm["edition"], size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=2)
-    add_p(doc, f"Yogyakarta — {fm['year']}", size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0)
+    add_p(doc, f"Yogyakarta, {fm['year']}", size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0)
 
     # 2. Kolofon & Epigraph
     doc.add_page_break()
@@ -169,13 +179,14 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
     
     doc.add_page_break()
     doc.add_paragraph().paragraph_format.space_before = Pt(80)
-    add_box(doc, "KUTIPAN PEMBUKA", fm["epigraph"]["quote"] + f"\n\n— {fm['epigraph']['author']}", bg="FBFBF9")
+    author_text = clean_all(fm["epigraph"].get("author", "Catatan Perjalanan Batin"))
+    add_box(doc, "KUTIPAN PEMBUKA", fm["epigraph"]["quote"] + f"\n\n({author_text})", bg="FBFBF9")
 
     # 3. Prolog & TOC
     doc.add_page_break()
     add_p(doc, "PROLOG", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
     add_p(doc, fm["prologue"]["title"], bold=True, size=15, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=16)
-    add_p(doc, "— ❖ —", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
+    add_p(doc, "❖", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
     for p in fm["prologue"]["paragraphs"]:
         add_p(doc, p)
         
@@ -204,7 +215,7 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
             add_p(doc, chap["title"], bold=True, size=16, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=6)
             if chap.get("subtitle"):
                 add_p(doc, chap["subtitle"], italic=True, size=10.5, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=14)
-            add_p(doc, "— ❖ —", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
+            add_p(doc, "❖", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
             
             add_arabic_box(doc, chap.get("ayat_ar"), chap.get("ayat_id"), chap.get("ayat_ref"),
                            chap.get("doa_ar"), chap.get("doa_id"), chap.get("doa_ref"))
@@ -224,7 +235,7 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
     doc.add_page_break()
     add_p(doc, "EPILOG", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
     add_p(doc, data["epilogue"]["title"], bold=True, size=15, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=16)
-    add_p(doc, "— ❖ —", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
+    add_p(doc, "❖", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=16)
     for p in data["epilogue"]["paragraphs"]:
         add_p(doc, p)
 
@@ -262,10 +273,10 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
                     r = p.add_run(txt)
                     r.font.name, r.font.size, r.font.bold = "Garamond", Pt(11), True
                 elif ci == 1:
-                    r = p.add_run(txt)
+                    r = p.add_run(clean_all(txt))
                     r.font.name, r.font.size, r.font.bold = "Garamond", Pt(10), True
                 else:
-                    r = p.add_run(txt)
+                    r = p.add_run(clean_all(txt))
                     r.font.name, r.font.size = "Garamond", Pt(9.5)
                     r.font.color.rgb = C_MUTED
 
@@ -287,19 +298,19 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
                           "right": {"val": "single", "sz": "6", "color": "CCCCCC"}})
         p0 = c.paragraphs[0]
         p0.paragraph_format.space_after = Pt(4)
-        r0 = p0.add_run(f"✍️  {nb['title'].upper()}")
+        r0 = p0.add_run(f"✍️  {clean_all(nb['title']).upper()}")
         r0.font.name, r0.font.size, r0.font.bold, r0.font.color.rgb = "Garamond", Pt(11), True, C_DARK_GREEN
         
         p_q = c.add_paragraph()
         p_q.paragraph_format.space_after = Pt(8)
-        r_q = p_q.add_run(f'"{nb["quote"]}"')
+        r_q = p_q.add_run(f'"{clean_all(nb["quote"])}"')
         r_q.font.name, r_q.font.size, r_q.font.italic, r_q.font.color.rgb = "Garamond", Pt(9.5), True, C_MUTED
         
         for prompt in nb["prompts"]:
             p = c.add_paragraph()
             p.paragraph_format.space_before, p.paragraph_format.space_after = Pt(1), Pt(3)
             p.paragraph_format.line_spacing = 1.25
-            r = p.add_run(prompt)
+            r = p.add_run(clean_all(prompt))
             r.font.name, r.font.size = "Garamond", Pt(9.5)
 
     # 8. Riset Ilmiah & Integrasi QR
@@ -307,9 +318,9 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
     add_p(doc, "POJOK RISET & VALIDASI ILMIAH", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
     add_p(doc, "Daftar Sitasi Jurnal Peer-Reviewed dengan DOI Aktif", italic=True, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=16)
     for idx, r in enumerate(data["research_data"], start=1):
-        add_p(doc, f"[{idx}] {r['citation']}", bold=True, size=9.5, space_after=1, indent=0)
+        add_p(doc, f"[{idx}] {clean_all(r['citation'])}", bold=True, size=9.5, space_after=1, indent=0)
         add_p(doc, f"DOI Resmi: {r['doi']}", size=8.5, color=C_DARK_GREEN, space_after=1, indent=0)
-        add_p(doc, f"Signifikansi Riset: {r['notes']}", italic=True, size=9, color=C_MUTED, space_after=8, indent=0)
+        add_p(doc, f"Signifikansi Riset: {clean_all(r['notes'])}", italic=True, size=9, color=C_MUTED, space_after=8, indent=0)
 
     doc.add_page_break()
     add_p(doc, "INTEGRASI DIGITAL & KODE QR PENDUKUNG", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
