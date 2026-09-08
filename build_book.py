@@ -371,29 +371,24 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
             ques = prompt.get("question", "")
             n_lines = prompt.get("lines", 2)
 
-            # Pill tag kategori
-            # keep_with_next pada paragraf dalam tabel pill agar selalu ikut bersama pertanyaan
-            tbl_tag = doc.add_table(rows=1, cols=1)
-            tbl_tag.alignment = WD_TABLE_ALIGNMENT.LEFT
-            tbl_tag.autofit = False
-            ct = tbl_tag.rows[0].cells[0]
-            ct.width = Cm(10.4)
-            set_cell(ct, fill_hex="1B5E20", top=50, bottom=50, left=120, right=120,
-                     borders={"top": {"val": "none"}, "bottom": {"val": "none"},
-                              "left": {"val": "none"}, "right": {"val": "none"}})
-            pt = ct.paragraphs[0]
-            pt.paragraph_format.space_after = Pt(0)
-            pt.paragraph_format.keep_with_next = True  # Jangan pisahkan dari pertanyaan
-            rt = pt.add_run(f"  {clean_all(tag)}  ")
-            rt.font.name, rt.font.size, rt.font.bold = "Garamond", Pt(8.5), True
-            rt.font.color.rgb = RGBColor(255, 255, 255)
+            # Pill tag kategori — pakai paragraf XML-shaded (bukan tabel) agar keep_with_next bekerja native
+            ppill = doc.add_paragraph()
+            ppill.paragraph_format.space_before = Pt(6)
+            ppill.paragraph_format.space_after = Pt(0)
+            ppill.paragraph_format.keep_with_next = True  # EFEKTIF karena ini paragraf sejati
+            # Terapkan warna latar hijau via XML shading
+            pPr_pill = ppill._p.get_or_add_pPr()
+            pPr_pill.append(parse_xml(f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="1B5E20"/>'))
+            rtag = ppill.add_run(f"  \u25a0  {clean_all(tag)}  ")
+            rtag.font.name, rtag.font.size, rtag.font.bold = "Garamond", Pt(8.5), True
+            rtag.font.color.rgb = RGBColor(255, 255, 255)
 
             # Teks pertanyaan — keep_with_next agar ikut bersama baris jawaban
             pqs = doc.add_paragraph()
             pqs.paragraph_format.space_before = Pt(3)
             pqs.paragraph_format.space_after = Pt(2)
             pqs.paragraph_format.line_spacing = 1.3
-            pqs.paragraph_format.keep_with_next = True  # Jangan pisahkan dari garis jawaban
+            pqs.paragraph_format.keep_with_next = True  # Selalu satu halaman dengan garis jawaban
             rqs = pqs.add_run(clean_all(ques))
             rqs.font.name, rqs.font.size, rqs.font.bold = "Garamond", Pt(10), True
             rqs.font.color.rgb = C_BLACK
@@ -404,8 +399,7 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
                 pdl.paragraph_format.space_before = Pt(0)
                 pdl.paragraph_format.space_after = Pt(4)
                 pdl.paragraph_format.line_spacing = 1.6
-                pdl.paragraph_format.keep_together = True  # Jaga baris ini tetap utuh
-                # Baris pertama: keep_with_next agar tidak orphan, baris terakhir: boleh terpisah dari blok berikutnya
+                pdl.paragraph_format.keep_together = True
                 if i_line < n_lines - 1:
                     pdl.paragraph_format.keep_with_next = True
                 pdl.paragraph_format.tab_stops.add_tab_stop(TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
