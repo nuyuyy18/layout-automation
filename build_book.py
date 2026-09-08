@@ -372,6 +372,7 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
             n_lines = prompt.get("lines", 2)
 
             # Pill tag kategori
+            # keep_with_next pada paragraf dalam tabel pill agar selalu ikut bersama pertanyaan
             tbl_tag = doc.add_table(rows=1, cols=1)
             tbl_tag.alignment = WD_TABLE_ALIGNMENT.LEFT
             tbl_tag.autofit = False
@@ -382,25 +383,31 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
                               "left": {"val": "none"}, "right": {"val": "none"}})
             pt = ct.paragraphs[0]
             pt.paragraph_format.space_after = Pt(0)
+            pt.paragraph_format.keep_with_next = True  # Jangan pisahkan dari pertanyaan
             rt = pt.add_run(f"  {clean_all(tag)}  ")
             rt.font.name, rt.font.size, rt.font.bold = "Garamond", Pt(8.5), True
             rt.font.color.rgb = RGBColor(255, 255, 255)
 
-            # Teks pertanyaan
+            # Teks pertanyaan — keep_with_next agar ikut bersama baris jawaban
             pqs = doc.add_paragraph()
             pqs.paragraph_format.space_before = Pt(3)
             pqs.paragraph_format.space_after = Pt(2)
             pqs.paragraph_format.line_spacing = 1.3
+            pqs.paragraph_format.keep_with_next = True  # Jangan pisahkan dari garis jawaban
             rqs = pqs.add_run(clean_all(ques))
             rqs.font.name, rqs.font.size, rqs.font.bold = "Garamond", Pt(10), True
             rqs.font.color.rgb = C_BLACK
 
-            # Garis jawaban dot leader edge-to-edge
-            for _ in range(n_lines):
+            # Garis jawaban dot leader edge-to-edge — keep_together agar tidak terpotong
+            for i_line in range(n_lines):
                 pdl = doc.add_paragraph()
                 pdl.paragraph_format.space_before = Pt(0)
                 pdl.paragraph_format.space_after = Pt(4)
                 pdl.paragraph_format.line_spacing = 1.6
+                pdl.paragraph_format.keep_together = True  # Jaga baris ini tetap utuh
+                # Baris pertama: keep_with_next agar tidak orphan, baris terakhir: boleh terpisah dari blok berikutnya
+                if i_line < n_lines - 1:
+                    pdl.paragraph_format.keep_with_next = True
                 pdl.paragraph_format.tab_stops.add_tab_stop(TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
                 pdl.add_run("\t")
 
