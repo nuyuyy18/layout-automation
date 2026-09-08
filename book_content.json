@@ -738,40 +738,82 @@
     {
       "sheet_num": "1",
       "title": "Catatan Hati & Evaluasi Batin Pekanan",
+      "subtitle": "My Sacred Soul Reflection Journal",
       "quote": "Tuliskan apa yang membuat jiwamu bergetar dalam hening. Di lembar ini, tidak ada yang perlu kau sembunyikan dari tatapan Allah.",
+      "mood_options": [
+        "Tenang",
+        "Lelah",
+        "Gundah",
+        "Bersyukur"
+      ],
       "prompts": [
-        "Pekan Ke / Tanggal: ...................................................................................................................................................",
-        "1. Hal yang paling membuat batinku merasa sepi / cemas pekan ini:",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "2. Situasi atau tuntutan yang paling menguras energi dan batinku (tanda burnout):",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "3. Batasan diri (boundary) yang berhasil kutegakkan demi menjaga kesehatan batinku:",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "4. Satu hal sederhana yang paling kusyukuri dari nikmat Allah pekan ini:",
-        " ...................................................................................................................................................................................."
-      ]
+        {
+          "num": "01",
+          "tag": "EVALUASI RASA SEPI & KEKOSONGAN",
+          "question": "1. Hal yang paling membuat batinku merasa sepi, terasing, atau cemas pekan ini:",
+          "lines": 2
+        },
+        {
+          "num": "02",
+          "tag": "DETEKSI BURNOUT & KELELAHAN",
+          "question": "2. Situasi, tugas, atau tuntutan yang paling menguras energi batinku hingga lelah:",
+          "lines": 2
+        },
+        {
+          "num": "03",
+          "tag": "BATASAN DIRI & KETENANGAN (BOUNDARY)",
+          "question": "3. Batasan diri yang berhasil kutegakkan demi menjaga kesehatan batin dan fisik:",
+          "lines": 2
+        },
+        {
+          "num": "04",
+          "tag": "RASA SYUKUR & HADIAH KECIL HARI INI",
+          "question": "4. Satu nikmat sederhana yang paling kusyukuri dari pemeliharaan Allah pekan ini:",
+          "lines": 2
+        }
+      ],
+      "closing_affirmation": "Aku berhak untuk tenang. Aku melepaskan hal-hal di luar kendaliku ke dalam pemeliharaan Allah.",
+      "closing_label": "Skor Kedamaian Jiwa:  [ 1 ] Sangat Lelah   [ 2 ] Cemas   [ 3 ] Cukup   [ 4 ] Tenang   [ 5 ] Damai"
     },
     {
       "sheet_num": "2",
       "title": "Ikrar Pemulihan & Doa Kepasrahan",
+      "subtitle": "Sacred Healing & Surrender Commitment",
       "quote": "Bila kau berani menyerahkan lukamu ke dalam tangan Allah, Dia akan mengubah kepedihanmu menjadi lentera kebijaksanaan.",
+      "mood_options": [
+        "Menerima",
+        "Memaafkan",
+        "Bertumbuh",
+        "Pasrah"
+      ],
       "prompts": [
-        "1. Luka atau kekecewaan masa lalu yang kini mulai kuikhlaskan kepergiannya:",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "2. Nama orang yang kudoakan kebaikan untuknya agar hatiku bebas dari dendam:",
-        " ....................................................................................................................................................................................",
-        "3. Pertumbuhan batin (hikmah emas) yang kupelajari setelah melewati ujian terberat:",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "4. Doa dan harapan terbaikku kepada Allah untuk lembaran hidup baruku esok hari:",
-        " ....................................................................................................................................................................................",
-        " ....................................................................................................................................................................................",
-        "Tanda Tangan Jiwa yang Merdeka: ........................................................"
-      ]
+        {
+          "num": "01",
+          "tag": "PELEPASAN LUKA MASA LALU",
+          "question": "1. Luka atau kekecewaan masa lalu yang kini mulai kuikhlaskan kepergiannya tanpa dendam:",
+          "lines": 2
+        },
+        {
+          "num": "02",
+          "tag": "DOA KEMAAFAN BAGI YANG MENYAKITI",
+          "question": "2. Nama orang yang kudoakan kebaikan untuknya agar hatiku merdeka dari racun amarah:",
+          "lines": 2
+        },
+        {
+          "num": "03",
+          "tag": "HIKMAH EMAS PASCA BADAI (KINTSUGI)",
+          "question": "3. Pertumbuhan batin atau hikmah emas yang kupelajari setelah melewati badai terberat:",
+          "lines": 2
+        },
+        {
+          "num": "04",
+          "tag": "DOA & HARAPAN LEMBARAN BARU",
+          "question": "4. Doa dan harapan terbaikku kepada Allah untuk langkah hidup baruku esok hari:",
+          "lines": 2
+        }
+      ],
+      "closing_affirmation": "Luka masa laluku telah mengering. Hari ini aku melangkah sebagai jiwa yang utuh dan merdeka.",
+      "closing_label": "Tanda Tangan Jiwa yang Merdeka"
     }
   ],
   "research_data": [

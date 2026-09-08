@@ -4,7 +4,7 @@ import re
 import docx
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
@@ -280,38 +280,159 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
                     r.font.name, r.font.size = "Garamond", Pt(9.5)
                     r.font.color.rgb = C_MUTED
 
-    # 7. Notebook Curhat Batin (2 Halaman)
+    # 7. Notebook Curhat Batin (2 Halaman) — Premium Luxury Template
+    # Tab stop kanan untuk dotted lines edge-to-edge (lebar penulisan A5: left 2.2cm + right 1.8cm = 10.8cm)
+    TAB_RIGHT = Cm(10.4)  # Tepat ke batas kanan margin
+
+    def add_dotted_line(container, label="", lines=1, space_before=1, space_after=2):
+        """Tambahkan baris garis titik-titik edge-to-edge menggunakan tab stop dot leader."""
+        for _ in range(lines):
+            p = container.add_paragraph()
+            p.paragraph_format.space_before = Pt(space_before)
+            p.paragraph_format.space_after = Pt(space_after)
+            p.paragraph_format.line_spacing = 1.5
+            # Tab stop kanan dengan dot leader di ujung margin
+            p.paragraph_format.tab_stops.add_tab_stop(TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+            if label:
+                r_lbl = p.add_run(label)
+                r_lbl.font.name = "Garamond"
+                r_lbl.font.size = Pt(9)
+                r_lbl.font.color.rgb = C_MUTED
+                label = ""  # Hanya label di baris pertama
+            p.add_run("\t")  # Tab ini akan diisi titik-titik sampai ke batas kanan
+
     for nb in data["notebook_data"]:
         doc.add_page_break()
-        add_p(doc, f"LEMBAR CURHAT BATIN & PROGRESS MINGGUAN (BAGIAN {nb['sheet_num']})", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=4)
-        add_p(doc, "Ruang hening ini disediakan khusus untuk tulisan tanganmu di hadapan Allah:", italic=True, size=10, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=10)
-        
-        tbl = doc.add_table(rows=1, cols=1)
-        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
-        tbl.autofit = False
-        c = tbl.cell(0, 0)
-        c.width = Cm(10.8)
-        set_cell(c, fill_hex="FBFBF9", top=140, bottom=140, left=160, right=160,
-                 borders={"left": {"val": "single", "sz": "16", "color": "1B5E20"},
-                          "top": {"val": "single", "sz": "10", "color": "1B5E20"},
-                          "bottom": {"val": "single", "sz": "10", "color": "1B5E20"},
-                          "right": {"val": "single", "sz": "6", "color": "CCCCCC"}})
-        p0 = c.paragraphs[0]
-        p0.paragraph_format.space_after = Pt(4)
-        r0 = p0.add_run(f"✍️  {clean_all(nb['title']).upper()}")
-        r0.font.name, r0.font.size, r0.font.bold, r0.font.color.rgb = "Garamond", Pt(11), True, C_DARK_GREEN
-        
-        p_q = c.add_paragraph()
-        p_q.paragraph_format.space_after = Pt(8)
-        r_q = p_q.add_run(f'"{clean_all(nb["quote"])}"')
-        r_q.font.name, r_q.font.size, r_q.font.italic, r_q.font.color.rgb = "Garamond", Pt(9.5), True, C_MUTED
-        
+
+        # ── HEADER HALAMAN ──
+        add_p(doc, "✦  LEMBAR REFLEKSI JIWA  ✦", bold=True, size=9.5, align=WD_ALIGN_PARAGRAPH.CENTER,
+              color=C_LIGHT, indent=0, space_after=2)
+        add_p(doc, f"BAGIAN {nb['sheet_num']}  ·  {clean_all(nb['title']).upper()}",
+              bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER,
+              color=C_DARK_GREEN, indent=0, space_after=2)
+        add_p(doc, clean_all(nb['subtitle']), italic=True, size=9.5,
+              align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=6)
+        # Garis pembatas dekoratif
+        add_p(doc, "─" * 52, size=8, align=WD_ALIGN_PARAGRAPH.CENTER,
+              color=C_DARK_GREEN, indent=0, space_after=4)
+
+        # ── KOTAK KUTIPAN INSPIRASI ──
+        tbl_q = doc.add_table(rows=1, cols=1)
+        tbl_q.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl_q.autofit = False
+        cq = tbl_q.cell(0, 0)
+        cq.width = Cm(10.4)
+        set_cell(cq, fill_hex="F4FAF4", top=120, bottom=120, left=180, right=180,
+                 borders={"top": {"val": "single", "sz": "6", "color": "1B5E20"},
+                          "bottom": {"val": "single", "sz": "6", "color": "1B5E20"},
+                          "left": {"val": "single", "sz": "20", "color": "1B5E20"},
+                          "right": {"val": "none", "sz": "0", "color": "FFFFFF"}})
+        pq = cq.paragraphs[0]
+        pq.paragraph_format.space_after = Pt(0)
+        rq1 = pq.add_run('"')
+        rq1.font.name, rq1.font.size, rq1.font.color.rgb = "Garamond", Pt(22), C_DARK_GREEN
+        rq2 = pq.add_run(clean_all(nb['quote']))
+        rq2.font.name, rq2.font.size, rq2.font.italic, rq2.font.color.rgb = "Garamond", Pt(9.5), True, C_MUTED
+        doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+        # ── TRACKER METADATA ──
+        tbl_m = doc.add_table(rows=2, cols=1)
+        tbl_m.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl_m.autofit = False
+        for ri, (lbl_txt, meta_lines) in enumerate([
+            ("Tanggal / Pekan ke  : ", 1),
+            ("Kondisi Batin       : ", 1),
+        ]):
+            cm = tbl_m.rows[ri].cells[0]
+            cm.width = Cm(10.4)
+            set_cell(cm, fill_hex="FFFFFF", top=60, bottom=60, left=0, right=0,
+                     borders={"top": {"val": "none"}, "bottom": {"val": "none"},
+                              "left": {"val": "none"}, "right": {"val": "none"}})
+            pm = cm.paragraphs[0]
+            pm.paragraph_format.space_before = Pt(0)
+            pm.paragraph_format.space_after = Pt(3)
+            pm.paragraph_format.line_spacing = 1.5
+            pm.paragraph_format.tab_stops.add_tab_stop(TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+            if ri == 1:  # Mood options row — teks biasa tanpa dot leader
+                mood_str = "   ".join(f"[  ] {m}" for m in nb.get("mood_options", []))
+                rm = pm.add_run(f"{lbl_txt}{mood_str}")
+                rm.font.name, rm.font.size = "Garamond", Pt(9)
+                rm.font.color.rgb = C_MUTED
+            else:
+                rm = pm.add_run(lbl_txt)
+                rm.font.name, rm.font.size = "Garamond", Pt(9)
+                rm.font.color.rgb = C_MUTED
+                pm.add_run("\t")  # Dot leader sampai ke batas kanan
+        doc.add_paragraph().paragraph_format.space_after = Pt(4)
+
+        # ── LOOP PERTANYAAN REFLEKSI ──
         for prompt in nb["prompts"]:
-            p = c.add_paragraph()
-            p.paragraph_format.space_before, p.paragraph_format.space_after = Pt(1), Pt(3)
-            p.paragraph_format.line_spacing = 1.25
-            r = p.add_run(clean_all(prompt))
-            r.font.name, r.font.size = "Garamond", Pt(9.5)
+            tag  = prompt.get("tag", "")
+            ques = prompt.get("question", "")
+            n_lines = prompt.get("lines", 2)
+
+            # Pill tag kategori
+            tbl_tag = doc.add_table(rows=1, cols=1)
+            tbl_tag.alignment = WD_TABLE_ALIGNMENT.LEFT
+            tbl_tag.autofit = False
+            ct = tbl_tag.rows[0].cells[0]
+            ct.width = Cm(10.4)
+            set_cell(ct, fill_hex="1B5E20", top=50, bottom=50, left=120, right=120,
+                     borders={"top": {"val": "none"}, "bottom": {"val": "none"},
+                              "left": {"val": "none"}, "right": {"val": "none"}})
+            pt = ct.paragraphs[0]
+            pt.paragraph_format.space_after = Pt(0)
+            rt = pt.add_run(f"  {clean_all(tag)}  ")
+            rt.font.name, rt.font.size, rt.font.bold = "Garamond", Pt(8.5), True
+            rt.font.color.rgb = RGBColor(255, 255, 255)
+
+            # Teks pertanyaan
+            pqs = doc.add_paragraph()
+            pqs.paragraph_format.space_before = Pt(3)
+            pqs.paragraph_format.space_after = Pt(2)
+            pqs.paragraph_format.line_spacing = 1.3
+            rqs = pqs.add_run(clean_all(ques))
+            rqs.font.name, rqs.font.size, rqs.font.bold = "Garamond", Pt(10), True
+            rqs.font.color.rgb = C_BLACK
+
+            # Garis jawaban dot leader edge-to-edge
+            for _ in range(n_lines):
+                pdl = doc.add_paragraph()
+                pdl.paragraph_format.space_before = Pt(0)
+                pdl.paragraph_format.space_after = Pt(4)
+                pdl.paragraph_format.line_spacing = 1.6
+                pdl.paragraph_format.tab_stops.add_tab_stop(TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+                pdl.add_run("\t")
+
+        # ── FOOTER PENUTUP ──
+        add_p(doc, "─" * 52, size=8, align=WD_ALIGN_PARAGRAPH.CENTER,
+              color=C_DARK_GREEN, indent=0, space_before=6, space_after=4)
+        tbl_f = doc.add_table(rows=1, cols=1)
+        tbl_f.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl_f.autofit = False
+        cf = tbl_f.cell(0, 0)
+        cf.width = Cm(10.4)
+        set_cell(cf, fill_hex="F4FAF4", top=100, bottom=100, left=160, right=160,
+                 borders={"top": {"val": "single", "sz": "8", "color": "1B5E20"},
+                          "bottom": {"val": "single", "sz": "8", "color": "1B5E20"},
+                          "left": {"val": "single", "sz": "8", "color": "1B5E20"},
+                          "right": {"val": "single", "sz": "8", "color": "1B5E20"}})
+        pf1 = cf.paragraphs[0]
+        pf1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pf1.paragraph_format.space_after = Pt(6)
+        rf1 = pf1.add_run("✦  " + clean_all(nb.get("closing_affirmation",
+              "Aku berhak untuk tenang. Aku melepaskan hal-hal di luar kendaliku.")) + "  ✦")
+        rf1.font.name, rf1.font.size, rf1.font.italic, rf1.font.color.rgb = "Garamond", Pt(9.5), True, C_DARK_GREEN
+        # Baris skor/tanda tangan dengan dot leader
+        pf2 = cf.add_paragraph()
+        pf2.paragraph_format.space_before = Pt(2)
+        pf2.paragraph_format.space_after = Pt(0)
+        pf2.paragraph_format.line_spacing = 1.5
+        pf2.paragraph_format.tab_stops.add_tab_stop(Cm(8.8), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        closing_lbl = nb.get("closing_label", "Skor Kedamaian Jiwa :")
+        rf2 = pf2.add_run(clean_all(closing_lbl))
+        rf2.font.name, rf2.font.size, rf2.font.color.rgb = "Garamond", Pt(8.5), C_MUTED
+        doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
     # 8. Riset Ilmiah & Integrasi QR
     doc.add_page_break()
