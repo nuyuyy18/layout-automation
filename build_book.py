@@ -322,21 +322,23 @@ def generate_book(json_path="book_content.json", out_docx="result/Ketika_Jiwa_Pu
         add_p(doc, f"DOI Resmi: {r['doi']}", size=8.5, color=C_DARK_GREEN, space_after=1, indent=0)
         add_p(doc, f"Signifikansi Riset: {clean_all(r['notes'])}", italic=True, size=9, color=C_MUTED, space_after=8, indent=0)
 
-    doc.add_page_break()
-    add_p(doc, "INTEGRASI DIGITAL & KODE QR PENDUKUNG", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
-    add_p(doc, "Pindai QR Code untuk konsultasi AI Assistant atau menyaksikan video sumber:", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=14)
-    
     res_dir = os.path.dirname(out_docx)
     for i, qr in enumerate(data["digital_integration"]["qr_items"]):
-        if i == 2:
-            doc.add_page_break()
+        doc.add_page_break() # Setiap QR Code menempati halaman baru agar teks dan gambar selalu utuh di satu halaman
+        if i == 0:
+            add_p(doc, "INTEGRASI DIGITAL & KODE QR PENDUKUNG", bold=True, size=13, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=4)
+            add_p(doc, "Pindai QR Code untuk konsultasi AI Assistant atau menyaksikan video sumber:", size=10, align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=14)
+        else:
             add_p(doc, "INTEGRASI DIGITAL & KODE QR PENDUKUNG (LANJUTAN)", bold=True, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, color=C_DARK_GREEN, indent=0, space_after=12)
+            
         add_box(doc, qr["title"], f"{qr['desc']}\n\nTautan Resmi: {qr['url']}", bg="FAFAFA", italic=False)
         img_p = os.path.join(res_dir, qr["img_file"])
         if os.path.exists(img_p):
             p_img = doc.paragraphs[-1]
             p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_img.add_run().add_picture(img_p, width=Inches(1.4))
+            p_img.paragraph_format.space_before = Pt(4)
+            p_img.paragraph_format.space_after = Pt(8)
+            p_img.add_run().add_picture(img_p, width=Inches(1.5))
             doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
     os.makedirs(os.path.dirname(out_docx), exist_ok=True)
