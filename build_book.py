@@ -139,7 +139,6 @@ def generate_book(json_path="book_content.json",
           align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=10)
     add_p(doc, fm["subtitle"], italic=True, size=11,
           align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=30)
-    add_thin_rule(doc, space_before=0, space_after=18)
     add_p(doc, fm["compiler"], size=10,
           align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=4)
     for insp in fm["inspirations"]:
@@ -210,7 +209,6 @@ def generate_book(json_path="book_content.json",
               align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=12)
         add_p(doc, part["subtitle"], italic=True, size=10.5,
               align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=16)
-        add_thin_rule(doc, space_before=0, space_after=10)
         add_p(doc, f"Inspirasi Kajian: {part['source']}", italic=True, size=9,
               align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0)
 
@@ -225,7 +223,6 @@ def generate_book(json_path="book_content.json",
             if chap.get("subtitle"):
                 add_p(doc, chap["subtitle"], italic=True, size=10.5,
                       align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=16)
-            add_thin_rule(doc, space_before=0, space_after=16)
 
             # Ayat & Doa — blok teks biasa, tanpa tabel kotak hijau
             add_arabic_block(
@@ -233,7 +230,6 @@ def generate_book(json_path="book_content.json",
                 chap.get("ayat_ar"), chap.get("ayat_id"), chap.get("ayat_ref"),
                 chap.get("doa_ar"),  chap.get("doa_id"),  chap.get("doa_ref"),
             )
-            add_thin_rule(doc, space_before=4, space_after=14)
 
             # Narasi utama (catatan hati) — langsung teks, tanpa header label [ ... ]
             for p in chap["catatan_hati"]:
@@ -245,7 +241,6 @@ def generate_book(json_path="book_content.json",
                 add_p(doc, p, size=11, space_after=5)
 
             # Kutipan hikmah — block quote tipis
-            add_thin_rule(doc, space_before=8, space_after=6)
             add_block_quote(doc, f'"{chap["quote"]}"')
 
     # ── 7. EPILOG ─────────────────────────────────────────────────────────────
