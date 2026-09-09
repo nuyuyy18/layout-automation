@@ -179,11 +179,8 @@ def generate_book(json_path="book_content.json",
 
     # ── 4. PROLOG ─────────────────────────────────────────────────────────────
     doc.add_page_break()
-    add_p(doc, "PROLOG", bold=True, size=10.5,
-          align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=4)
     add_p(doc, fm["prologue"]["title"], bold=True, size=15,
           align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=18)
-    add_thin_rule(doc, space_before=0, space_after=16)
     for p in fm["prologue"]["paragraphs"]:
         add_p(doc, p)
 
@@ -201,8 +198,6 @@ def generate_book(json_path="book_content.json",
             add_p(doc, f"    {chap['num']}:  {chap['title']}", size=9.5,
                   indent=0.6, space_after=2, color=C_DARK)
     add_p(doc, "Epilog: Sebuah Surat untuk Jiwa yang Berjuang",
-          bold=True, size=10, indent=0, space_after=2)
-    add_p(doc, "Jurnal Interaktif & Riset Ilmiah",
           bold=True, size=10, indent=0, space_after=2)
 
     # ── 6. BAGIAN & BAB ───────────────────────────────────────────────────────
@@ -249,99 +244,18 @@ def generate_book(json_path="book_content.json",
             for p in chap["sains_paras"]:
                 add_p(doc, p, size=11, space_after=5)
 
-            # Latihan mindful — judul kecil + block quote
-            add_thin_rule(doc, space_before=8, space_after=6)
-            add_p(doc, chap["mindful_title"], bold=True, size=10.5,
-                  indent=0, space_after=4, color=C_ACCENT)
-            add_block_quote(doc, chap["mindful_text"])
-
             # Kutipan hikmah — block quote tipis
-            add_thin_rule(doc, space_before=6, space_after=6)
+            add_thin_rule(doc, space_before=8, space_after=6)
             add_block_quote(doc, f'"{chap["quote"]}"')
 
     # ── 7. EPILOG ─────────────────────────────────────────────────────────────
     doc.add_page_break()
-    add_p(doc, "EPILOG", bold=True, size=10.5,
-          align=WD_ALIGN_PARAGRAPH.CENTER, color=C_LIGHT, indent=0, space_after=4)
     add_p(doc, data["epilogue"]["title"], bold=True, size=15,
           align=WD_ALIGN_PARAGRAPH.CENTER, indent=0, space_after=18)
-    add_thin_rule(doc, space_before=0, space_after=16)
     for p in data["epilogue"]["paragraphs"]:
         add_p(doc, p)
 
-    # ── 8. JURNAL REFLEKSI (hanya Sheet 1; Sheet 2 dihapus sesuai permintaan) ──
-    TAB_RIGHT = Cm(10.2)
-
-    def add_dotted_line(container, lines=1):
-        for _ in range(lines):
-            pdl = container.add_paragraph()
-            pdl.paragraph_format.space_before = Pt(0)
-            pdl.paragraph_format.space_after  = Pt(5)
-            pdl.paragraph_format.line_spacing = 1.6
-            pdl.paragraph_format.tab_stops.add_tab_stop(
-                TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
-            pdl.add_run("\t")
-
-    for nb in data["notebook_data"]:
-        # Lewati Sheet 2 (Ikrar Pemulihan & Doa Kepasrahan) sesuai permintaan
-        if str(nb.get("sheet_num")) == "2":
-            continue
-
-        doc.add_page_break()
-
-        # Header sederhana — tanpa ✦ dan badge warna
-        add_p(doc, f"JURNAL REFLEKSI  \u2014  {clean_all(nb['title']).upper()}",
-              bold=True, size=11.5, align=WD_ALIGN_PARAGRAPH.CENTER,
-              color=C_ACCENT, indent=0, space_after=4)
-        add_p(doc, clean_all(nb["subtitle"]), italic=True, size=9,
-              align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=6)
-        add_thin_rule(doc, space_before=2, space_after=8)
-
-        # Kutipan inspirasi
-        add_block_quote(doc, nb["quote"], size=10)
-        doc.add_paragraph().paragraph_format.space_after = Pt(4)
-
-        # Metadata: Tanggal & Kondisi Batin — dotted fill
-        for lbl in ["Tanggal / Pekan ke  : ", "Kondisi Batin       : "]:
-            pm = doc.add_paragraph()
-            pm.paragraph_format.space_before = Pt(0)
-            pm.paragraph_format.space_after  = Pt(4)
-            pm.paragraph_format.line_spacing = 1.5
-            pm.paragraph_format.tab_stops.add_tab_stop(
-                TAB_RIGHT, WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
-            rl = pm.add_run(lbl)
-            rl.font.name, rl.font.size = FONT_BODY, Pt(9.5)
-            rl.font.color.rgb = C_MUTED
-            pm.add_run("\t")
-
-        doc.add_paragraph().paragraph_format.space_after = Pt(6)
-
-        # Pertanyaan refleksi — tanpa pill badge hijau, tanpa XML shading
-        for prompt in nb["prompts"]:
-            ques    = prompt.get("question", "")
-            n_lines = prompt.get("lines", 2)
-
-            # Pertanyaan langsung — tebal, tanpa kotak warna
-            pqs = doc.add_paragraph()
-            pqs.paragraph_format.space_before   = Pt(8)
-            pqs.paragraph_format.space_after    = Pt(3)
-            pqs.paragraph_format.line_spacing   = 1.3
-            pqs.paragraph_format.keep_with_next = True
-            rqs = pqs.add_run(clean_all(ques))
-            rqs.font.name, rqs.font.size, rqs.font.bold = FONT_BODY, Pt(10.5), True
-            rqs.font.color.rgb = C_BLACK
-
-            # Garis jawaban dot leader
-            add_dotted_line(doc, lines=n_lines)
-
-        # Footer penutup sederhana — tanpa ✦ dan outline kotak
-        add_thin_rule(doc, space_before=8, space_after=6)
-        closing = nb.get("closing_affirmation",
-                         "Aku berhak untuk tenang. Aku melepaskan hal-hal di luar kendaliku.")
-        add_p(doc, clean_all(closing), italic=True, size=9.5,
-              align=WD_ALIGN_PARAGRAPH.CENTER, color=C_MUTED, indent=0, space_after=4)
-
-    # ── 9. RISET ILMIAH ───────────────────────────────────────────────────────
+    # ── 8. RISET ILMIAH ───────────────────────────────────────────────────────
     doc.add_page_break()
     add_p(doc, "POJOK RISET & VALIDASI ILMIAH", bold=True, size=12,
           align=WD_ALIGN_PARAGRAPH.CENTER, color=C_ACCENT, indent=0, space_after=4)
